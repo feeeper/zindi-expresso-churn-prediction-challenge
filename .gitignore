@@ -20,3 +20,4 @@ venv
 data/train_folds.csv
 data/Train.csv
 data/Test.csv
+catboost_info
