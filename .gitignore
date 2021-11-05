@@ -22,5 +22,10 @@ data/Train.csv
 data/Test.csv
 catboost_info
 .idea
-data
+./data
 *.csv
+src/__pycache__
+src/utils/__pycache__
+src/data/__pycache__
+data/interim
+data/raw
