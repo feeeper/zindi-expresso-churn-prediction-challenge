@@ -1,0 +1,35 @@
+features:
+  REGION:
+    method: one_hot_encode    
+  TOP_PACK:
+    method: one_hot_encode
+  DATA_VOLUME:
+    method: standard_scale
+  REVENUE:
+    method: standard_scale
+  ARPU_SEGMENT:
+    method: standard_scale
+  ON_NET:
+    method: standard_scale
+  MONTANT:
+    method: standard_scale
+  ORANGE:
+    method: standard_scale
+  TIGO:
+    method: standard_scale
+  FREQ_TOP_PACK:
+    method: standard_scale
+  FREQUENCE_RECH:
+    method: standard_scale
+  FREQUENCE:
+    method: standard_scale
+  REGULARITY:
+    method: standard_scale
+  ZONE1:
+    method: drop
+  ZONE2:
+    method: drop
+  MRG:
+    method: drop
+  TENURE:
+    method: drop

@@ -8,3 +8,5 @@ catboost
 xgboost
 lightgbm
 keras
+pyyaml
+icecream
