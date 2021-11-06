@@ -5,11 +5,13 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from argparse import ArgumentParser
-from configparser import ConfigParser
+import yaml
+from icecream import ic
 
 from typing import Callable, Union
 from enum import Enum
 
+from sklearn.model_selection import KFold
 import pandas as pd
 from tqdm import tqdm
 pd.options.mode.chained_assignment = None
@@ -30,6 +32,11 @@ class NumericalFeatureFillNanMode(Enum):
     NEW_VALUE = 2
     MEAN = 3
     MEDIAN = 4
+
+
+class FeatureType(Enum):
+    Categorical = 1
+    Numerical = 2
 
 
 nan_values_per_column = {
@@ -90,23 +97,23 @@ def remove_constant_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fill_nan_categorical_feature(
-        series: pd.Series,
+        train_series: pd.Series,
         mode: CategoricalFeatureFillNanMode = CategoricalFeatureFillNanMode.NEW_VALUE,
         new_value: Union[str, float] = 'OTHER') -> pd.Series:
     if mode == CategoricalFeatureFillNanMode.NEW_VALUE:
-        log.info(f'Column "{series.name}" fill None with "{new_value}" ({mode})')
-        return series.fillna(new_value)
+        log.info(f'Column "{train_series.name}" fill None with "{new_value}" ({mode})')
+        return train_series.fillna(new_value)
     if mode == CategoricalFeatureFillNanMode.MOST_COMMON:
-        most_commons: pd.Series = series.mode(dropna=True)
+        most_commons: pd.Series = train_series.mode(dropna=True)
 
         if most_commons.shape[0] > 1:
             log.warn(f'There are more than one most common values. '
-                  f'Values [{", ".join(most_commons)}] were met {series.value_counts()[most_commons[0]]} times. '
+                  f'Values [{", ".join(most_commons)}] were met {train_series.value_counts()[most_commons[0]]} times. '
                   f'The first ("{most_commons[0]}") was selected. '
                   f'You can use CategoricalFeatureFillNanMode.NEW_VALUE for set exact value for `None` values.')
         most_common = most_commons[0]
-        log.info(f'Column "{series.name}" fill None with "{most_common}" ({mode})')
-        return series.fillna(most_common)
+        log.info(f'Column "{train_series.name}" fill None with "{most_common}" ({mode})')
+        return train_series.fillna(most_common)
     raise ValueError(f'Unsupported mode was passed: {mode}')
 
 
@@ -128,33 +135,55 @@ def fill_nan_numerical_features(
         return series.fillna(median)
 
 
-def prepare(df: pd.DataFrame, config: ConfigParser) -> pd.DataFrame:
+def create_folds(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    n_splits: int = int(cfg['general']['kfolds'])
+    df["kfold"] = -1
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    for fold, (train_indicies, valid_indicies) in enumerate(kf.split(X=df)):
+        df.loc[valid_indicies, "kfold"] = fold
+    return df
+
+
+def prepare(
+    train_df: pd.DataFrame,
+    config: dict) -> pd.DataFrame:
     try:
         log.info('Clean dataset: remove constant columns')
-        result_df: pd.DataFrame = remove_constant_columns(df)
+        train_result_df: pd.DataFrame = remove_constant_columns(train_df)
 
-        log.info(f'Clean dataset: remove columns with None more than {config["GENERAL"]["NONE_THRESHOLD"]}')
-        result_df = remove_nan_columns(df, float(config["GENERAL"]["NONE_THRESHOLD"]) * 100)
+        log.info(f'Clean dataset: remove columns with None more than {config["general"]["none_threshold"]}')
+        threshold: float = float(config["general"]["none_threshold"]) * 100
+        train_result_df = remove_nan_columns(train_result_df, threshold)
 
-        log.info('Process categorical features')
-        cat_features_config: dict = config['CAT_FEATURES']
-        for cat_feature in tqdm(cat_features_config.keys()):
-            if cat_feature not in result_df:
-                log.warn(f'Column "{cat_feature}" not presented in the data frame')
-            result_df[cat_feature] = fill_nan_categorical_feature(result_df[cat_feature], CategoricalFeatureFillNanMode[cat_features_config[cat_feature]])
-
-        log.info('Process numerical features')
-        num_features_config: dict = config['NUM_FEATURES']
-        for num_feature in tqdm(num_features_config.keys()):
-            if num_feature not in result_df:
-                log.warn(f'Column "{num_feature}" not presented in the data frame')
+        features = config['features']
+        drop_columns: list[str] = []
+        for feature_name, feature_settings in features.items():
+            if feature_name not in train_df:
+                log.warn(f'Column "{feature_name}" not presented in the data frame')
                 continue
-            result_df[num_feature] = fill_nan_numerical_features(result_df[num_feature], NumericalFeatureFillNanMode[num_features_config[num_feature]])
+
+            if feature_settings['method'] == 'drop':
+                drop_columns.append(feature_name)
+                continue
+
+            try:
+                if FeatureType[feature_settings['type']] == FeatureType.Categorical:
+                    train_result_df[feature_name] = fill_nan_categorical_feature(train_df[feature_name], CategoricalFeatureFillNanMode[feature_settings['fillna']])
+                else:
+                    train_result_df[feature_name] = fill_nan_numerical_features(train_df[feature_name], NumericalFeatureFillNanMode[feature_settings['fillna']])
+            except KeyError as ke:
+                log.warn(f'Feature {feature_name} has incorrect type ({feature_settings["type"]})')
+                ic(feature_settings['type'])
+                ic(type(feature_settings['type']))
+
+        train_result_df = train_result_df.drop(drop_columns, errors='ignore', axis='columns')
+        train_result_df = create_folds(train_result_df, config)
     except Exception as e:
         log.err(e)
         raise
 
-    return result_df
+    return train_result_df
+
 
 
 if __name__ == '__main__':
@@ -162,28 +191,28 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-src', help='path to source csv', type=str, default='./data/raw/Train.zip')
-    parser.add_argument('-dst', help='path to result csv', type=str, default='./data/interim/Train.csv')
+    parser.add_argument('-dst', help='path to result csv', type=str, default='./data/interim/Train')
     parser.add_argument('-mode', help='how to save result data frame', choices=['pkl', 'csv'], default='csv')
     parser.add_argument('-cfg', help='path to config', default=default_config)
         
     args = parser.parse_args()
     log.info(args)
 
-    config_parser = ConfigParser()
-    config_parser.optionxform = str
+    with open(args.cfg, 'r') as config_file:
+        config = yaml.safe_load(config_file)
 
-    config_parser.read_file(open(default_config))
-    if args.cfg != default_config:
-        config_parser.read_file(open(args.cfg))
-    
-    source_df = pd.read_csv(args.src)
-    dest_df = prepare(source_df, config_parser)
+    # ic(FeatureType[config['features']['REGION']['type']])
+    # raise
 
-    if args.mode == 'csv':
-        dest_df.to_csv(f'{args.dst}.csv', index=None)
-    elif args.mode == 'pkl':
-        dest_df.to_pickle(f'{args.dst}.pkl')
+    train_source_df = pd.read_csv(args.src)
+    train_dest_df = prepare(train_source_df, config)
+
+    mode: str = args.mode
+    if mode == 'csv':
+        train_dest_df.to_csv(f'{args.dst}.csv', index=None)
+    elif mode == 'pkl':
+        train_dest_df.to_pickle(f'{args.dst}.pkl')
     else:
-        raise ValueError(f'Unkonwn mode {args.mode}')
+        raise ValueError(f'Unkonwn mode {mode}')
 else:
     print(__name__)
