@@ -30,3 +30,4 @@ src/data/__pycache__
 data/interim
 data/raw
 .vscode
+models
