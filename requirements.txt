@@ -1,0 +1,12 @@
+pandas
+numpy
+sklearn
+tqdm
+matplotlib
+optuna
+catboost
+xgboost
+lightgbm
+keras
+pyyaml
+icecream
