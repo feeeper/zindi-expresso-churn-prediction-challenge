@@ -1,5 +1,6 @@
 import sys
 import os
+from shutil import copyfile
 
 from icecream import ic
 from tqdm import tqdm
@@ -138,6 +139,12 @@ if __name__ == '__main__':
     
     metadata: Metadata = Metadata(mean_score, std_score, total_training_time, args.cfg, args.src, dt.now().strftime('%Y-%m-%dT%H-%M-%S'), models_metadata)
 
-    with open(f'{default_model_name}-meta.yml', 'w', encoding='utf8') as f:
+    with open(f'{args.dst}.meta.yml', 'w', encoding='utf8') as f:
         yaml.dump(metadata, f)
 
+    copyfile(args.cfg, f'{args.dst}.config.yml')
+
+    model_paths: str = "\n".join([f'\t- {x.model}' for x in metadata.models])
+    log.success(f'Trained model(s):\n{model_paths}')
+    log.success(f'Config:\n\t- {args.dst}.config.yml')
+    log.success(f'Meta:\n\t- {args.dst}.meta.yml')
