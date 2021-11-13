@@ -1,121 +1,94 @@
 general:
   none_threshold: 0.9
   kfolds: 5
-  # train_src: "./data/raw/Train.zip"
-  # test_src: "./data/raw/Test.zip"
-  # train_dst: "./data/raw/Train"
-  # test_dst: "./data/raw/Test"
-  # mode: pkl
 features:
   REGION:
     type: Categorical
     fillna: NEW_VALUE
-    method: one_hot_encode
+    methods:
+      - one_hot_encode
   TENURE:
     type: Categorical
     fillna: NEW_VALUE
     # Reason: 94.8% rows have one value ("K > 24 month")
-    method: drop
+    methods:
+      - drop
   TOP_PACK:
     type: Categorical
     fillna: NEW_VALUE
-    method: one_hot_encode
+    methods:
+      - one_hot_encode
   DATA_VOLUME:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   REVENUE:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   ARPU_SEGMENT:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   ON_NET:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   MONTANT:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   ORANGE:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   TIGO:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   ZONE1:
     type: Numerical
     fillna: MEDIAN
     # Reason: 93.6% None values
-    method: drop
+    methods:
+      - drop
   ZONE2:
     type: Numerical
     fillna: MEDIAN
     # Reason: 92.1% None values
-    method: drop
+    methods:
+      - drop
   FREQ_TOP_PACK:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   FREQUENCE_RECH:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   FREQUENCE:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   REGULARITY:
     type: Numerical
     fillna: MEDIAN
-    method: standard_scale
+    methods:
+      - standard_scale
   MRG:
     # Reason: constant feature
-    method: drop
-# features:
-#   REGION:
-#     method: one_hot_encode    
-#   TOP_PACK:
-#     method: one_hot_encode
-#   DATA_VOLUME:
-#     method: standard_scale
-#   REVENUE:
-#     method: standard_scale
-#   ARPU_SEGMENT:
-#     method: standard_scale
-#   ON_NET:
-#     method: standard_scale
-#   MONTANT:
-#     method: standard_scale
-#   ORANGE:
-#     method: standard_scale
-#   TIGO:
-#     method: standard_scale
-#   FREQ_TOP_PACK:
-#     method: standard_scale
-#   FREQUENCE_RECH:
-#     method: standard_scale
-#   FREQUENCE:
-#     method: standard_scale
-#   REGULARITY:
-#     method: standard_scale
-#   ZONE1:
-#     # Reason: 93.6% None values
-#     method: drop
-#   ZONE2:
-#     # Reason: 92.1% None values
-#     method: drop
-#   MRG:
-#     # Reason: constant feature
-#     method: drop
-#   TENURE:
-#     # Reason: 
-#     method: drop
+    methods:
+      - drop
 train:
   algorithm: cat_boost
   target: CHURN
@@ -130,8 +103,8 @@ train:
     verbose: 0
 predict:
   models:
-    - ./models/2021-11-10T20-49-fold-0.pkl
-    - ./models/2021-11-10T20-49-fold-1.pkl
-    - ./models/2021-11-10T20-49-fold-2.pkl
-    - ./models/2021-11-10T20-49-fold-3.pkl
-    - ./models/2021-11-10T20-49-fold-4.pkl
+    - ./models/2021-11-13T12-51-fold-0.pkl
+    - ./models/2021-11-13T12-51-fold-1.pkl
+    - ./models/2021-11-13T12-51-fold-2.pkl
+    - ./models/2021-11-13T12-51-fold-3.pkl
+    - ./models/2021-11-13T12-51-fold-4.pkl

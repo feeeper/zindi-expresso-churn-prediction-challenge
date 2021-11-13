@@ -83,27 +83,29 @@ def build_features(train_df: pd.DataFrame, test_df: pd.DataFrame, config: dict) 
     drop_columns: list[str] = []
 
     for feature_name, feature_settings in feature_engineering_section.items():
-        method: str = feature_settings['method']
-        section: dict = feature_engineering[method]
-        action: Callable = section['action']
-        result: Result = section.get('result', Result.Series)
+        methods: list[str] = feature_settings['methods']
 
-        # TODO: how can I handle drop columns?
-        if action == null_action:
-            drop_columns.append(feature_name)
-            continue
+        for method in methods:
+            section: dict = feature_engineering[method]
+            action: Callable = section['action']
+            result: Result = section.get('result', Result.Series)
 
-        if result == Result.Series:
-            result_train_df[feature_name], result_test_df[feature_name] = action(result_train_df[feature_name], result_test_df[feature_name])
-        elif result == Result.DataFrame:
-            train_tmp, test_tmp = action(result_train_df[feature_name], result_test_df[feature_name])
-            result_train_df = result_train_df.drop(feature_name, axis='columns')
-            result_train_df = pd.concat([result_train_df, train_tmp], axis='columns')
+            # TODO: how can I handle drop columns?
+            if action == null_action:
+                drop_columns.append(feature_name)
+                continue
 
-            result_test_df = result_test_df.drop(feature_name, axis='columns')
-            result_test_df = pd.concat([result_test_df, test_tmp], axis='columns')
-            del train_tmp
-            del test_tmp
+            if result == Result.Series:
+                result_train_df[feature_name], result_test_df[feature_name] = action(result_train_df[feature_name], result_test_df[feature_name])
+            elif result == Result.DataFrame:
+                train_tmp, test_tmp = action(result_train_df[feature_name], result_test_df[feature_name])
+                result_train_df = result_train_df.drop(feature_name, axis='columns')
+                result_train_df = pd.concat([result_train_df, train_tmp], axis='columns')
+
+                result_test_df = result_test_df.drop(feature_name, axis='columns')
+                result_test_df = pd.concat([result_test_df, test_tmp], axis='columns')
+                del train_tmp
+                del test_tmp
 
     result_train_df = result_train_df.drop(drop_columns, errors='ignore', axis='columns')
     result_test_df = result_test_df.drop(drop_columns, errors='ignore', axis='columns')
