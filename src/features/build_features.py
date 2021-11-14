@@ -60,7 +60,8 @@ def standard_scale(
     train_series: pd.Series,
     test_series: pd.Series,
     with_mean: bool=True,
-    with_std: bool=True) -> Tuple[pd.Series, pd.Series]:
+    with_std: bool=True,
+    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
 
     log.info(f'standard_scale processing: {train_series.name}')
     standard_scaler = StandardScaler(with_mean=with_mean, with_std=with_std)
@@ -69,6 +70,33 @@ def standard_scale(
     transformed_test = standard_scaler.transform(pd.DataFrame(test_series))
 
     return pd.Series(pd.Series(transformed_train[:, 0], name=train_series.name)), pd.Series(pd.Series(transformed_test[:, 0], name=test_series.name))
+
+
+def min_max_scale(
+    train_series: pd.Series,
+    test_series: pd.Series,
+    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
+    log.info(f'standard_scale processing: {train_series.name}')
+    scaler = MinMaxScaler()
+    
+    transformed_train = scaler.fit_transform(pd.DataFrame(train_series))
+    transformed_test = scaler.transform(pd.DataFrame(test_series))
+
+    return pd.Series(pd.Series(transformed_train[:, 0], name=train_series.name)), pd.Series(pd.Series(transformed_test[:, 0], name=test_series.name))
+
+
+def target_encoding(
+    train_series: pd.Series,
+    test_series: pd.Series,
+    target_series: pd.Series) -> Tuple[pd.Series, pd.Series]:
+    tmp: pd.DataFrame = pd.DataFrame({
+        'cat_feature': train_series,
+        'target': target_series
+    })
+    grouped: pd.DataFrame = tmp.groupby('cat_feature').agg(np.mean)
+    grouped_map: dict = grouped.to_dict()['target']
+
+    return train_series.map(grouped_map), test_series.map(grouped_map)
 
 
 def null_action(any: Any) -> None:
@@ -96,16 +124,17 @@ def build_features(train_df: pd.DataFrame, test_df: pd.DataFrame, config: dict) 
                 continue
 
             if result == Result.Series:
-                result_train_df[feature_name], result_test_df[feature_name] = action(result_train_df[feature_name], result_test_df[feature_name])
+                result_train_df[f'{feature_name}_{method}'], result_test_df[f'{feature_name}_{method}'] = action(result_train_df[feature_name], result_test_df[feature_name], target_series=result_train_df['CHURN'])
             elif result == Result.DataFrame:
                 train_tmp, test_tmp = action(result_train_df[feature_name], result_test_df[feature_name])
-                result_train_df = result_train_df.drop(feature_name, axis='columns')
+                
                 result_train_df = pd.concat([result_train_df, train_tmp], axis='columns')
-
-                result_test_df = result_test_df.drop(feature_name, axis='columns')
                 result_test_df = pd.concat([result_test_df, test_tmp], axis='columns')
+                
                 del train_tmp
                 del test_tmp
+
+        drop_columns.append(feature_name)
 
     result_train_df = result_train_df.drop(drop_columns, errors='ignore', axis='columns')
     result_test_df = result_test_df.drop(drop_columns, errors='ignore', axis='columns')
@@ -119,6 +148,12 @@ feature_engineering = {
     },
     'standard_scale': {
         'action': standard_scale,
+    },
+    'min_max_scale': {
+        'action': min_max_scale,
+    },
+    'target_encoding': {
+        'action': target_encoding
     },
     'drop': {
         'action': null_action
