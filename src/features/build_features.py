@@ -111,6 +111,14 @@ def target_encoding(
     return train_series.map(grouped_map), test_series.map(grouped_map)
 
 
+@log_call
+def loge(
+    train_series: pd.Series,
+    test_series: pd.Series,
+    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
+    return np.log(train_series + 1), np.log(test_series + 1)
+
+
 def null_action(any: Any) -> None:
     pass
 
@@ -166,6 +174,9 @@ feature_engineering = {
     },
     'target_encoding': {
         'action': target_encoding
+    },
+    'loge': {
+        'action': loge
     },
     'drop': {
         'action': null_action

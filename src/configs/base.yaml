@@ -7,6 +7,7 @@ features:
     fillna: NEW_VALUE
     methods:
       - one_hot_encode
+      # - target_encoding
   TENURE:
     type: Categorical
     fillna: NEW_VALUE
@@ -18,41 +19,49 @@ features:
     fillna: NEW_VALUE
     methods:
       - one_hot_encode
+      # - target_encoding
   DATA_VOLUME:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   REVENUE:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   ARPU_SEGMENT:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   ON_NET:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   MONTANT:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   ORANGE:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   TIGO:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   ZONE1:
     type: Numerical
     fillna: MEDIAN
@@ -70,21 +79,25 @@ features:
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   FREQUENCE_RECH:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   FREQUENCE:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   REGULARITY:
     type: Numerical
     fillna: MEDIAN
     methods:
       - standard_scale
+      - loge
   MRG:
     # Reason: constant feature
     methods:
@@ -92,7 +105,7 @@ features:
 train:
   algorithm: cat_boost
   target: CHURN
-  n_rows: .1
+  n_rows: .25
   random_state: 146
   skip:
     - user_id
@@ -103,8 +116,8 @@ train:
     verbose: 0
 predict:
   models:
-    - ./models/2021-11-13T12-51-fold-0.pkl
-    - ./models/2021-11-13T12-51-fold-1.pkl
-    - ./models/2021-11-13T12-51-fold-2.pkl
-    - ./models/2021-11-13T12-51-fold-3.pkl
-    - ./models/2021-11-13T12-51-fold-4.pkl
+    - ./models/2021-11-14T09-24-20-fold-0.pkl
+    - ./models/2021-11-14T09-24-20-fold-1.pkl
+    - ./models/2021-11-14T09-24-20-fold-2.pkl
+    - ./models/2021-11-14T09-24-20-fold-3.pkl
+    - ./models/2021-11-14T09-24-20-fold-4.pkl
