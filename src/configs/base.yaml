@@ -7,7 +7,7 @@ features:
     fillna: NEW_VALUE
     methods:
       - one_hot_encode
-      # - target_encoding
+      - target_encoding
   TENURE:
     type: Categorical
     fillna: NEW_VALUE
