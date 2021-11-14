@@ -38,17 +38,24 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 log = ColoredPrint()
 
 
+def log_call(func: Callable) -> Callable:
+    def wrapper(*args, **kwargs):
+        log.info(f'{func.__name__} procesing: {args[0].name}')
+        return func(*args, **kwargs)
+    return wrapper
+
+
 class Result(Enum):
     DataFrame = 0,
     Series = 1
 
 
+@log_call
 def one_hot_encode(train_series: pd.Series, test_series: pd.Series) -> Tuple[pd.DataFrame, pd.Series]:
     # TODO Should one hot encode train and test datasets
     def __replace_non_letters_with_underscore(name: str) -> str:
         return re.sub('\W', '_', name).lower()
 
-    log.info(f'one_hot_encode processing: {train_series.name}')
     ohe: OneHotEncoder = OneHotEncoder(handle_unknown='ignore', dtype=np.int0)
     sprs: csr_matrix = ohe.fit_transform(pd.DataFrame(train_series))
     fixed_series_name: str = __replace_non_letters_with_underscore(train_series.name)
@@ -60,6 +67,7 @@ def one_hot_encode(train_series: pd.Series, test_series: pd.Series) -> Tuple[pd.
     return train_tmp, test_tmp
 
 
+@log_call
 def standard_scale(
     train_series: pd.Series,
     test_series: pd.Series,
@@ -67,7 +75,6 @@ def standard_scale(
     with_std: bool=True,
     target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
 
-    log.info(f'standard_scale processing: {train_series.name}')
     standard_scaler = StandardScaler(with_mean=with_mean, with_std=with_std)
     
     transformed_train = standard_scaler.fit_transform(pd.DataFrame(train_series))
@@ -76,11 +83,11 @@ def standard_scale(
     return pd.Series(pd.Series(transformed_train[:, 0], name=train_series.name)), pd.Series(pd.Series(transformed_test[:, 0], name=test_series.name))
 
 
+@log_call
 def min_max_scale(
     train_series: pd.Series,
     test_series: pd.Series,
-    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
-    log.info(f'standard_scale processing: {train_series.name}')
+    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:  
     scaler = MinMaxScaler()
     
     transformed_train = scaler.fit_transform(pd.DataFrame(train_series))
@@ -89,6 +96,7 @@ def min_max_scale(
     return pd.Series(pd.Series(transformed_train[:, 0], name=train_series.name)), pd.Series(pd.Series(transformed_test[:, 0], name=test_series.name))
 
 
+@log_call
 def target_encoding(
     train_series: pd.Series,
     test_series: pd.Series,
