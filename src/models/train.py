@@ -80,16 +80,16 @@ def train(df: pd.DataFrame, cfg: dict, path: str = None) -> list[Model]:
         log.info(f'{fold:<6}{roc_auc:5f}  {sec_elapsed/60:5f}')
         scores.append(roc_auc)
 
+        save_path: str = '' if path is None else f'{path}-fold-{fold}.pkl'
+        params: dict = {'msg': "can't find params"}
+        if 'get_all_params' in dir(model):
+            params = model.get_all_params()
+        elif 'get_params' in dir(model):
+            params = model.get_params()
+
+        models_metadata.append(Model(str(model), save_path, params, float(roc_auc), sec_elapsed/60))
+
         if path is not None:
-            save_path: str = f'{path}-fold-{fold}.pkl'
-            params: dict = {'msg': 'can find params'}
-            if 'get_all_params' in dir(model):
-                params = model.get_all_params()
-            elif 'get_params' in dir(model):
-                params = model.get_params()
-
-            models_metadata.append(Model(str(model), save_path, params, float(roc_auc), sec_elapsed/60))
-
             with open(save_path, 'xb') as model_file:
                 pickle.to_pickle(model, model_file)
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('-src', help='path to source csv', type=str, default=default_source_dataset)
     parser.add_argument('-dst', help='path to result model', type=str, default=default_model_name)
     parser.add_argument('-cfg', help='path to config', default=default_config)
-    parser.add_argument('-save', help='save models?', type=bool, default=True)
+    parser.add_argument('-save', help='save models?', type=lambda x: (str(x).lower() == 'true'), default=True)
         
     args = parser.parse_args()
     log.info(args)
@@ -139,12 +139,13 @@ if __name__ == '__main__':
     
     metadata: Metadata = Metadata(mean_score, std_score, total_training_time, args.cfg, args.src, dt.now().strftime('%Y-%m-%dT%H-%M-%S'), models_metadata)
 
-    with open(f'{args.dst}.meta.yml', 'w', encoding='utf8') as f:
-        yaml.dump(metadata, f)
-
-    copyfile(args.cfg, f'{args.dst}.config.yml')
-
     model_paths: str = "\n".join([f'\t- {x.model}' for x in metadata.models])
     log.success(f'Trained model(s):\n{model_paths}')
     log.success(f'Config:\n\t- {args.dst}.config.yml')
     log.success(f'Meta:\n\t- {args.dst}.meta.yml')
+
+    if args.save:
+        with open(f'{args.dst}.meta.yml', 'w', encoding='utf8') as f:
+            yaml.dump(metadata, f)
+
+        copyfile(args.cfg, f'{args.dst}.config.yml')
