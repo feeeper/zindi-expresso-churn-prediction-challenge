@@ -29,6 +29,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import Binarizer
 
 import warnings
 
@@ -40,7 +41,7 @@ log = ColoredPrint()
 
 def log_call(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
-        log.info(f'{func.__name__} procesing: {args[0].name}')
+        log.info(f'{args[0].name}\t{func.__name__}')
         return func(*args, **kwargs)
     return wrapper
 
@@ -119,6 +120,30 @@ def loge(
     return np.log(train_series + 1), np.log(test_series + 1)
 
 
+@log_call
+def bin_mean(
+    train_series: pd.Series,
+    test_series: pd.Series,
+    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
+    binarizer = Binarizer(threshold=train_series.mean())
+    train_result: np.ndarray = binarizer.fit_transform([train_series])
+    # test_series has different shape. Had got "ValueError: X has 380127 features, but Binarizer is expecting 2154048 features as input."
+    test_result: np.ndarray = binarizer.fit_transform([test_series])
+    return pd.Series(train_result[0]), pd.Series(test_result[0])
+
+
+@log_call
+def bin_median(
+    train_series: pd.Series,
+    test_series: pd.Series,
+    target_series: pd.Series = None) -> Tuple[pd.Series, pd.Series]:
+    binarizer = Binarizer(threshold=train_series.median())
+    train_result: np.ndarray = binarizer.fit_transform([train_series])
+    # test_series has different shape. Had got "ValueError: X has 380127 features, but Binarizer is expecting 2154048 features as input."
+    test_result: np.ndarray = binarizer.fit_transform([test_series])
+    return pd.Series(train_result[0]), pd.Series(test_result[0])
+
+
 def null_action(any: Any) -> None:
     pass
 
@@ -177,6 +202,12 @@ feature_engineering = {
     },
     'loge': {
         'action': loge
+    },
+    'bin_mean': {
+        'action': bin_mean
+    },
+    'bin_median': {
+        'action': bin_median
     },
     'drop': {
         'action': null_action
