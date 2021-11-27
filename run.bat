@@ -1,2 +1,2 @@
-python .\src\features\build_features.py -train_src .\data\interim\Train.pkl -train_dst ./data/interim/Train_fe -mode pkl -test_src .\data\interim\Test.pkl -test_dst .\data\interim\Test_fe
-python .\src\models\train.py -cfg .\src\configs\base.yaml -src .\data\interim\Train_fe.pkl -save False
+python .\src\features\build_features.py -cfg .\src\configs\base.xgb.yaml -train_src .\data\interim\Train.pkl -train_dst ./data/interim/Train_fe -mode pkl -test_src .\data\interim\Test.pkl -test_dst .\data\interim\Test_fe
+python .\src\models\train.py -cfg .\src\configs\base.xgb.yaml -src .\data\interim\Train_fe.pkl -save True
