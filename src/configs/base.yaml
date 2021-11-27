@@ -1,7 +1,24 @@
 general:
   none_threshold: 0.9
   kfolds: 5
-features:
+features: 
+  # _GENERAL:
+  #   methods:
+  #     - poly:
+  #         params:
+  #           columns:
+  #             - DATA_VOLUME
+  #             - REVENUE
+  #             - ARPU_SEGMENT
+  #             - MONTANT
+  #             - ORANGE
+  #             - TIGO
+  #             - FREQ_TOP_PACK
+  #             - FREQUENCE_RECH
+  #             - FREQUENCE
+  #             - REGULARITY
+  #     - skip:
+  #       params: false
   REGION:
     type: Categorical
     fillna: NEW_VALUE
@@ -105,7 +122,7 @@ features:
 train:
   algorithm: cat_boost
   target: CHURN
-  n_rows: .25
+  n_rows: 1.
   random_state: 146
   skip:
     - user_id
@@ -114,10 +131,20 @@ train:
     n_estimators: 1000
     random_state: 42
     verbose: 0
+    objective: CrossEntropy
+    colsample_bylevel: 0.092268493983682
+    depth: 10
+    boosting_type: Plain
+    bootstrap_type: MVS
 predict:
   models:
-    - ./models/2021-11-14T09-24-20-fold-0.pkl
-    - ./models/2021-11-14T09-24-20-fold-1.pkl
-    - ./models/2021-11-14T09-24-20-fold-2.pkl
-    - ./models/2021-11-14T09-24-20-fold-3.pkl
-    - ./models/2021-11-14T09-24-20-fold-4.pkl
+    - ./models/2021-11-22T12-06-57-fold-0.pkl
+    - ./models/2021-11-22T12-06-57-fold-1.pkl
+    - ./models/2021-11-22T12-06-57-fold-2.pkl
+    - ./models/2021-11-22T12-06-57-fold-3.pkl
+    - ./models/2021-11-22T12-06-57-fold-4.pkl
+    - ./models/2021-11-24T22-27-22-fold-0.pkl
+    - ./models/2021-11-24T22-27-22-fold-1.pkl
+    - ./models/2021-11-24T22-27-22-fold-2.pkl
+    - ./models/2021-11-24T22-27-22-fold-3.pkl
+    - ./models/2021-11-24T22-27-22-fold-4.pkl
