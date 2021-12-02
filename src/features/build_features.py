@@ -41,7 +41,8 @@ log = ColoredPrint()
 
 def log_call(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
-        log.info(f'{args[0].name}\t{func.__name__}')
+        name: str = args[0].name if type(args[0]) == pd.Series else type(args[0])
+        log.info(f'{name}\t{func.__name__}')
         return func(*args, **kwargs)
     return wrapper
 
@@ -144,6 +145,25 @@ def bin_median(
     return pd.Series(train_result[0]), pd.Series(test_result[0])
 
 
+@log_call
+def poly(train: pd.DataFrame, test: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    poly = PolynomialFeatures(degree=3, interaction_only=True, include_bias=False)
+    train_poly = poly.fit_transform(train)
+    test_poly = poly.transform(test)
+
+    poly_columns = [f'poly_{x.replace(" ", "__")}' for x in poly.get_feature_names(train.columns)] # [f"poly_{i}" for i in range(train_poly.shape[1])]
+    df_poly = pd.DataFrame(train_poly, columns=poly_columns, dtype=np.float32)
+    df_test_poly = pd.DataFrame(test_poly, columns=poly_columns, dtype=np.float32)
+
+    result_train = pd.concat([train, df_poly], axis=1)
+    result_test = pd.concat([test, df_test_poly], axis=1)
+    
+    result_train = result_train.drop(train.columns, axis=1)
+    result_test = result_test.drop(train.columns, axis=1)
+
+    return result_train, result_test
+
+
 def null_action(any: Any) -> None:
     pass
 
@@ -156,6 +176,24 @@ def build_features(train_df: pd.DataFrame, test_df: pd.DataFrame, config: dict) 
     drop_columns: list[str] = []
 
     for feature_name, feature_settings in feature_engineering_section.items():
+        if feature_name == '_GENERAL':
+            methods: list[str] = feature_settings['methods']
+            for method in methods:
+                section: dict = feature_engineering[list(method.keys())[0]]
+                action: Callable = section['action']
+                result: Result = section.get('result', Result.Series)
+
+                col_names: list[str] = method['poly']['params']['columns']
+
+                train_tmp, test_tmp = action(result_train_df[col_names], result_test_df[col_names])
+                
+                result_train_df = pd.concat([result_train_df, train_tmp], axis='columns')
+                result_test_df = pd.concat([result_test_df, test_tmp], axis='columns')
+                
+                del train_tmp
+                del test_tmp
+            continue
+
         methods: list[str] = feature_settings['methods']
 
         for method in methods:
@@ -208,6 +246,10 @@ feature_engineering = {
     },
     'bin_median': {
         'action': bin_median
+    },
+    'poly': {
+        'action': poly,
+        'result': Result.DataFrame
     },
     'drop': {
         'action': null_action
