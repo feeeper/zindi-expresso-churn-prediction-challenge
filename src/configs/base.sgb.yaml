@@ -1,0 +1,123 @@
+general:
+  none_threshold: 0.9
+  kfolds: 5
+features:
+  REGION:
+    type: Categorical
+    fillna: NEW_VALUE
+    methods:
+      - one_hot_encode
+      - target_encoding
+  TENURE:
+    type: Categorical
+    fillna: NEW_VALUE
+    # Reason: 94.8% rows have one value ("K > 24 month")
+    methods:
+      - drop
+  TOP_PACK:
+    type: Categorical
+    fillna: NEW_VALUE
+    methods:
+      - one_hot_encode
+      # - target_encoding
+  DATA_VOLUME:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  REVENUE:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  ARPU_SEGMENT:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  ON_NET:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  MONTANT:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  ORANGE:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  TIGO:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  ZONE1:
+    type: Numerical
+    fillna: MEDIAN
+    # Reason: 93.6% None values
+    methods:
+      - drop
+  ZONE2:
+    type: Numerical
+    fillna: MEDIAN
+    # Reason: 92.1% None values
+    methods:
+      - drop
+  FREQ_TOP_PACK:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  FREQUENCE_RECH:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  FREQUENCE:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  REGULARITY:
+    type: Numerical
+    fillna: MEDIAN
+    methods:
+      - standard_scale
+      - loge
+  MRG:
+    # Reason: constant feature
+    methods:
+      - drop
+train:
+  algorithm: sgb
+  target: CHURN
+  n_rows: .1
+  random_state: 146
+  skip:
+    - user_id
+    - kfold
+  params:
+    n_estimators: 1000
+    random_state: 42
+    verbose: 0
+predict:
+  models:
+    - ./models/2021-11-29T15-25-34-fold-0.pkl
+    - ./models/2021-11-29T15-25-34-fold-1.pkl
+    - ./models/2021-11-29T15-25-34-fold-2.pkl
+    - ./models/2021-11-29T15-25-34-fold-3.pkl
+    - ./models/2021-11-29T15-25-34-fold-4.pkl

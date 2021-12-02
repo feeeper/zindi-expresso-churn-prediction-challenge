@@ -29,6 +29,8 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
+from sklearnex import patch_sklearn
+patch_sklearn()
 
 log = ColoredPrint()
 
@@ -37,7 +39,7 @@ algorithms = {
     'cat_boost': CatBoostClassifier,
     'xgb': XGBClassifier,
     'lgb': LGBMClassifier,
-    'sklgb': GradientBoostingClassifier
+    'sgb': GradientBoostingClassifier
 }
 
 
